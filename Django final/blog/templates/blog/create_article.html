@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Write Story - KnowledgeShare{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 font-serif">Create a new story</h1>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-8">
+        {% csrf_token %}
+
+        <!-- Title Input -->
+        <div>
+            <input type="text" name="title" placeholder="Title" required
+                class="w-full text-4xl md:text-5xl font-serif font-bold border-none placeholder-gray-300 focus:ring-0 px-0 bg-transparent text-gray-900 leading-tight">
+        </div>
+
+        <!-- Image Upload (Simple styling) -->
+        <div class="bg-gray-50 p-4 rounded-lg border border-dashed border-gray-300">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Cover Image</label>
+            <input type="file" name="image" accept="image/*" class="block w-full text-sm text-gray-500
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-full file:border-0
+              file:text-sm file:font-semibold
+              file:bg-indigo-50 file:text-indigo-700
+              hover:file:bg-indigo-100
+            " />
+        </div>
+
+        <!-- Content Textarea with Toolbar -->
+        <div class="relative">
+            <!-- Simple Toolbar -->
+            <div class="flex items-center gap-2 mb-2 border-b border-gray-100 pb-2 overflow-x-auto text-gray-500">
+                <button type="button" onclick="formatDoc('bold')" class="p-2 hover:bg-gray-100 rounded transition"
+                    title="Bold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 12h8a4 4 0 100-8H6v8zm0 0v8"></path>
+                    </svg>
+                </button>
+                <button type="button" onclick="formatDoc('italic')" class="p-2 hover:bg-gray-100 rounded transition"
+                    title="Italic">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                    </svg>
+                </button>
+                <button type="button" onclick="formatDoc('underline')" class="p-2 hover:bg-gray-100 rounded transition"
+                    title="Underline">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 3v13a4 4 0 008 0V3"></path>
+                    </svg>
+                </button>
+                <div class="w-px h-6 bg-gray-200 mx-2"></div>
+                <!-- Placeholder for more tools -->
+                <span class="text-xs text-gray-400">Markdown supported</span>
+            </div>
+
+            <textarea name="content" id="content-editor" rows="12" placeholder="Tell your story..." required
+                class="w-full text-xl text-gray-800 border-none focus:ring-0 px-0 bg-transparent resize-y font-serif leading-relaxed placeholder-gray-300 custom-scrollbar"></textarea>
+        </div>
+
+        <div class="flex items-center justify-between pt-6 border-t border-gray-100">
+            <a href="{% url 'blog:home' %}" class="text-gray-500 hover:text-gray-900 transition">Cancel</a>
+            <button type="submit"
+                class="bg-primary hover:bg-indigo-700 text-white px-8 py-3 rounded-full font-semibold transition shadow-md flex items-center gap-2">
+                <span>Publish</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                </svg>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function formatDoc(cmd, value = null) {
+        // This is a simplified "faked" toolbar since we are using a plain textarea.
+        // For a real WYSIWYG, we'd need a library like EasyMDE or Trix.
+        // Here we just wrap selection in Markdown for simplicity as requested "Add writing tool"
+
+        const textarea = document.getElementById('content-editor');
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        const selectedText = text.substring(start, end);
+
+        let before = '';
+        let after = '';
+
+        if (cmd === 'bold') { before = '**'; after = '**'; }
+        if (cmd === 'italic') { before = '*'; after = '*'; }
+        if (cmd === 'underline') { before = '__'; after = '__'; } // Not standard markdown but common
+
+        const newText = text.substring(0, start) + before + selectedText + after + text.substring(end);
+
+        textarea.value = newText;
+        textarea.focus();
+    }
+</script>
+
+<style>
+    /* Minimalist styling for inputs to feel like Medium/Notion */
+    input:focus,
+    textarea:focus {
+        outline: none;
+    }
+</style>
+{% endblock %}

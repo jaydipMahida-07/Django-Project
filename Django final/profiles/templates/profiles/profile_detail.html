@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile_user.username }} - KnowledgeShare{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Profile Header -->
+    <div class="flex flex-col md:flex-row items-center md:items-start gap-8 mb-12 border-b border-gray-100 pb-12">
+        <div class="flex-shrink-0">
+            {% if profile.profile_picture %}
+            <img src="{{ profile.profile_picture.url }}" alt="{{ profile_user.username }}"
+                class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg">
+            {% else %}
+            <img src="https://ui-avatars.com/api/?name={{ profile_user.username }}&background=random&size=128"
+                alt="{{ profile_user.username }}"
+                class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg">
+            {% endif %}
+        </div>
+
+        <div class="flex-grow text-center md:text-left">
+            <h1 class="text-4xl md:text-5xl font-bold font-serif text-gray-900 mb-2 tracking-tight">{{
+                profile_user.username }}</h1>
+
+            {% if profile.bio %}
+            <p class="text-gray-600 mb-4 max-w-lg">{{ profile.bio }}</p>
+            {% else %}
+            <p class="text-gray-400 italic mb-4">No bio available yet.</p>
+            {% endif %}
+
+            <div class="flex items-center justify-center md:justify-start gap-6 text-sm text-gray-500">
+                <span>{{ articles.count }} Stories</span>
+                <span>{{ profile.reputation }} Reputation</span>
+                {% if profile.location %}
+                <span>📍 {{ profile.location }}</span>
+                {% endif %}
+            </div>
+
+            {% if request.user == profile_user %}
+            <div class="mt-6">
+                <a href="#" class="text-sm font-medium text-primary hover:text-indigo-700">Edit Profile</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- User's Articles -->
+    <div>
+        <h2 class="text-xl font-bold text-gray-900 mb-6 border-b border-gray-100 pb-2 inline-block">Published Stories
+        </h2>
+        <div class="space-y-8">
+            {% for article in articles %}
+            <article class="flex flex-col md:flex-row gap-6 group">
+                <div class="flex-grow">
+                    <p class="text-xs text-gray-500 mb-1">{{ article.created_at|date:"M d, Y" }}</p>
+                    <a href="{% url 'blog:article_detail' slug=article.slug %}">
+                        <h3 class="text-xl font-bold text-gray-900 group-hover:text-primary transition font-serif mb-2">
+                            {{ article.title }}</h3>
+                        <p class="text-gray-500 line-clamp-2 text-sm">{{ article.content|striptags|truncatewords:20 }}
+                        </p>
+                    </a>
+                </div>
+                {% if article.image %}
+                <a href="{% url 'blog:article_detail' slug=article.slug %}"
+                    class="flex-shrink-0 w-full md:w-32 h-24 bg-gray-100 rounded-lg overflow-hidden">
+                    <img src="{{ article.image.url }}" alt="{{ article.title }}" class="w-full h-full object-cover">
+                </a>
+                {% endif %}
+            </article>
+            {% empty %}
+            <p class="text-gray-500 italic">Hasn't published any stories yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - KnowledgeShare{% endblock %}
+
+{% block content %}
+<div class="flex justify-center items-center min-h-[60vh]">
+    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 font-serif">Join the Community</h1>
+            <p class="text-gray-500 mt-2">Create an account to start sharing your knowledge.</p>
+        </div>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 text-red-700 p-3 rounded-lg text-sm">
+                {{ form.non_field_errors.0 }}
+            </div>
+            {% endif %}
+
+            {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    {{ field.label }}
+                </label>
+                {{ field }} <!-- We need to style the inputs via widget tweaks or simple CSS tweaks -->
+                <!-- Since raw rendering might lack classes, let's manually wrap inputs if possible or just use widget tweaks later. For now, basic rendering. -->
+                {% if field.errors %}
+                <p class="text-xs text-red-600 mt-1">{{ field.errors.0 }}</p>
+                {% endif %}
+                {% if field.help_text %}
+                <p class="text-xs text-gray-400 mt-1">{{ field.help_text }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <style>
+                /* Quick fix for form inputs rendered by {{ field }} */
+                input[type="text"],
+                input[type="email"],
+                input[type="password"] {
+                    width: 100%;
+                    padding: 0.5rem 1rem;
+                    border: 1px solid #d1d5db;
+                    /* gray-300 */
+                    border-radius: 0.5rem;
+                    outline: none;
+                    transition: all 0.2s;
+                }
+
+                input[type="text"]:focus,
+                input[type="email"]:focus,
+                input[type="password"]:focus {
+                    border-color: #4F46E5;
+                    /* indigo-600 */
+                    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+                }
+
+                .helptext {
+                    display: none;
+                    /* Hide default django help text to keep it clean, or style it */
+                }
+            </style>
+
+            <button type="submit"
+                class="w-full bg-primary hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition shadow-md hover:shadow-lg">
+                Create Account
+            </button>
+        </form>
+
+        <p class="text-center mt-6 text-gray-600 text-sm">
+            Already have an account?
+            <a href="{% url 'login' %}" class="text-primary font-medium hover:underline">Log in</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

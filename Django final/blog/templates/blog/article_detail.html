@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ article.title }} - KnowledgeShare{% endblock %}
+
+{% block content %}
+<!-- Reading Progress Bar -->
+<div id="progress-container" class="fixed top-0 left-0 w-full h-1 bg-gray-200 z-[60]" style="display: none;">
+    <div id="progress-bar" class="h-full bg-indigo-600 width-0 transition-all duration-150"></div>
+</div>
+
+<article class="bg-white min-h-screen pb-20 font-sans">
+    <!-- Immersive Hero Section -->
+    <div class="relative w-full h-[60vh] md:h-[70vh] overflow-hidden group">
+        {% if article.image %}
+        <img src="{{ article.image.url }}" alt="{{ article.title }}"
+            class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105">
+        {% else %}
+        <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-slate-800 to-black"></div>
+        {% endif %}
+
+        <!-- Gradient Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+
+        <!-- Hero Content -->
+        <div class="absolute bottom-0 left-0 w-full p-6 md:p-16 text-center text-white z-10">
+            <div class="max-w-4xl mx-auto animate-fade-in-up">
+                <!-- Category Badge -->
+                {% if article.category %}
+                <a href="#"
+                    class="inline-block bg-indigo-600 text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider mb-6 hover:bg-indigo-500 transition shadow-lg ring-1 ring-white/20">
+                    {{ article.category.name }}
+                </a>
+                {% endif %}
+
+                <!-- Title -->
+                <h1
+                    class="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-8 drop-shadow-xl text-balance tracking-tight">
+                    {{ article.title }}
+                </h1>
+
+                <!-- Author & Meta Data Row -->
+                <div
+                    class="flex flex-col md:flex-row items-center justify-center gap-6 text-sm md:text-lg font-medium text-slate-200">
+
+                    <!-- Author -->
+                    <a href="{% url 'profiles:detail' username=article.author.username %}"
+                        class="flex items-center gap-3 group/author hover:text-white transition">
+                        {% if article.author.profile.profile_picture %}
+                        <img src="{{ article.author.profile.profile_picture.url }}"
+                            class="w-12 h-12 rounded-full border-2 border-white/80 shadow-md object-cover group-hover/author:border-indigo-400 transition">
+                        {% else %}
+                        <img src="https://i.pravatar.cc/150?u={{ article.author.username }}"
+                            class="w-12 h-12 rounded-full border-2 border-white/80 shadow-md group-hover/author:border-indigo-400 transition">
+                        {% endif %}
+                        <span class="border-b-2 border-transparent group-hover/author:border-white/60 pb-0.5">
+                            {% firstof article.author.get_full_name article.author.username %}
+                        </span>
+                    </a>
+
+                    <span class="hidden md:inline text-white/30">•</span>
+
+                    <!-- Date -->
+                    <div class="flex items-center gap-2">
+                        {{ article.created_at|date:"F j, Y" }}
+                    </div>
+
+                    <span class="hidden md:inline text-white/30">•</span>
+
+                    <!-- Read Time -->
+                    <div class="flex items-center gap-2 text-indigo-300">
+                        {{ article.get_read_time }} min read
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Article Body & Sidebar -->
+    <div class="container mx-auto px-4 -mt-10 relative z-20 max-w-6xl flex flex-col lg:flex-row gap-12">
+
+        <!-- Left Sidebar (Desktop Actions) -->
+        <aside class="hidden lg:flex flex-col gap-6 sticky top-32 h-fit w-20 pt-12 items-center">
+            <button onclick="toggleLike('{{ article.slug }}')"
+                class="group flex flex-col items-center gap-2 w-full relative">
+                <div id="like-btn-desktop-container"
+                    class="w-14 h-14 rounded-full bg-white shadow-xl border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-red-600 group-hover:scale-110 transition duration-300 {% if user in article.likes.all %}text-red-600{% endif %}">
+                    <svg class="w-7 h-7 fill-current transition-transform active:scale-90" viewBox="0 0 24 24">
+                        <path
+                            d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                </div>
+                <span id="like-count-desktop" class="text-sm font-bold text-slate-600">{{ article.likes.count }}</span>
+            </button>
+
+            <button onclick="copyToClipboard()"
+                class="group w-14 h-14 rounded-full bg-white shadow-xl border border-slate-100 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:scale-110 transition duration-300 relative">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-5.367 3 3 0 00-5.367 5.367zm0 10.632a3 3 0 105.367-5.367 3 3 0 00-5.367 5.367z">
+                    </path>
+                </svg>
+                <!-- Tooltip -->
+                <span id="share-tooltip"
+                    class="absolute left-full ml-3 px-3 py-1.5 bg-slate-900 text-white text-xs font-bold rounded opacity-0 transition pointer-events-none whitespace-nowrap">Copied!</span>
+            </button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 bg-white rounded-t-3xl md:rounded-3xl shadow-2xl p-6 md:p-12 lg:p-16 ring-1 ring-black/5">
+            <!-- Article Text -->
+            <div
+                class="prose prose-lg md:prose-xl prose-slate mx-auto text-gray-900 leading-relaxed
+                        prose-headings:font-bold prose-headings:text-gray-900 prose-headings:tracking-tight
+                        prose-p:text-gray-800 prose-p:font-normal
+                        prose-a:text-indigo-700 prose-a:font-semibold prose-a:no-underline hover:prose-a:underline
+                        prose-strong:text-gray-900 prose-strong:font-bold
+                        prose-img:rounded-xl prose-img:shadow-lg prose-img:my-12
+                        prose-blockquote:border-l-4 prose-blockquote:border-indigo-600 prose-blockquote:bg-indigo-50/50 prose-blockquote:py-4 prose-blockquote:px-8 prose-blockquote:rounded-r-xl prose-blockquote:italic prose-blockquote:text-indigo-900">
+                {{ article.content|linebreaks }}
+            </div>
+
+            <!-- Divider -->
+            <div class="w-full h-px bg-slate-200 my-16"></div>
+
+            <!-- Simplified Author Section -->
+            <div class="flex items-center gap-6">
+                <a href="{% url 'profiles:detail' username=article.author.username %}" class="shrink-0">
+                    {% if article.author.profile.profile_picture %}
+                    <img src="{{ article.author.profile.profile_picture.url }}"
+                        class="w-20 h-20 rounded-full object-cover ring-4 ring-indigo-50 hover:ring-indigo-100 transition">
+                    {% else %}
+                    <img src="https://i.pravatar.cc/150?u={{ article.author.username }}"
+                        class="w-20 h-20 rounded-full ring-4 ring-indigo-50 hover:ring-indigo-100 transition">
+                    {% endif %}
+                </a>
+                <div class="flex-1">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">
+                        {% firstof article.author.get_full_name article.author.username %}
+                    </h3>
+                    <p class="text-gray-600 leading-relaxed">
+                        {{ article.author.profile.bio|default:"Sharing knowledge on KnowledgeShare." }}
+                    </p>
+                    {% if user.is_authenticated and user != article.author %}
+                    <button
+                        class="mt-4 text-indigo-600 font-bold text-sm tracking-wide uppercase hover:text-indigo-800 transition">
+                        Follow Author
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Action Bar -->
+    <div
+        class="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white/90 backdrop-blur-xl border border-white/40 p-3 rounded-full flex justify-between items-center shadow-2xl ring-1 ring-black/5 z-50">
+        <button onclick="toggleLike('{{ article.slug }}')"
+            class="flex-1 flex items-center justify-center gap-2 text-slate-600 active:scale-95 transition">
+            <div class="{% if user in article.likes.all %}text-red-600{% endif %}">
+                <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                    <path
+                        d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+            </div>
+            <span id="like-count-mobile" class="font-bold text-sm">{{ article.likes.count }}</span>
+        </button>
+        <div class="w-px h-6 bg-slate-300"></div>
+        <button onclick="copyToClipboard()"
+            class="flex-1 flex items-center justify-center gap-2 text-slate-600 active:scale-95 transition hover:text-indigo-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-5.367 3 3 0 00-5.367 5.367zm0 10.632a3 3 0 105.367-5.367 3 3 0 00-5.367 5.367z">
+                </path>
+            </svg>
+            <span class="font-bold text-sm">Share</span>
+        </button>
+    </div>
+
+</article>
+
+<script>
+    // 1. Reading Progress Bar
+    window.onscroll = function () {
+        let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+        let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        let scrolled = (winScroll / height) * 100;
+        document.getElementById("progress-bar").style.width = scrolled + "%";
+
+        let container = document.getElementById("progress-container");
+        if (scrolled > 1) {
+            container.style.display = "block";
+        } else {
+            container.style.display = "none";
+        }
+    };
+
+    // 2. AJAX Like Functionality
+    function toggleLike(slug) {
+        {% if not user.is_authenticated %}
+        window.location.href = "{% url 'login' %}?next={{ request.path }}";
+        return;
+        {% endif %}
+
+        fetch(`/blog/like/${slug}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // Update UI elements
+                const desktopContainer = document.getElementById('like-btn-desktop-container');
+                const desktopCount = document.getElementById('like-count-desktop');
+                const mobileCount = document.getElementById('like-count-mobile');
+
+                if (data.liked) {
+                    desktopContainer.classList.add('text-red-600');
+                } else {
+                    desktopContainer.classList.remove('text-red-600');
+                }
+                desktopCount.innerText = data.count;
+                mobileCount.innerText = data.count;
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // 3. Share Functionality
+    function copyToClipboard() {
+        navigator.clipboard.writeText(window.location.href).then(function () {
+            const tooltip = document.getElementById('share-tooltip');
+            tooltip.classList.remove('opacity-0');
+            setTimeout(() => {
+                tooltip.classList.add('opacity-0');
+            }, 2000);
+        }, function (err) {
+            console.error('Could not copy text: ', err);
+        });
+    }
+</script>
+
+<style>
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translate3d(0, 30px, 0);
+        }
+
+        to {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+    .animate-fade-in-up {
+        animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+</style>
+{% endblock %}
